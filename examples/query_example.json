@@ -1,0 +1,7 @@
+{
+  "query": "my dog is vomiting and lethargic",
+  "species": "dog",
+  "topic": null,
+  "document_type": null,
+  "top_k": 8
+}

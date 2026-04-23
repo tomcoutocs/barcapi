@@ -1,0 +1,23 @@
+# Install with Python 3.11+ only. On Windows: py -0p  then  py -3.13 -m venv .venv
+# (default `python` may be 3.7 and will fail on uvicorn>=0.24, pydantic 2, pinecone 5, etc.)
+fastapi>=0.100.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+openai>=1.40.0
+tiktoken>=0.5.0
+pypdf>=4.0.0
+python-docx>=1.0.0
+pinecone>=5.0.0
+weaviate-client>=4.6.0
+httpx>=0.27.0
+cachetools>=5.3.0
+packaging>=23.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+tenacity>=8.2.0
+
+# Optional: cross-encoder re-ranking (install for RERANK_ENABLED=true)
+# sentence-transformers>=3.0.0
