@@ -53,24 +53,27 @@ _DURATION_PATTERNS: list[tuple[re.Pattern[str], str]] = [
 ]
 
 
-def interpret_query(user_input: str) -> dict[str, Any]:
+def interpret_query(user_input: str, *, species: str = "dog") -> dict[str, Any]:
     text = user_input.strip()
-    low = text.lower()
+    sp = species.strip().lower() if species else "dog"
+    if sp not in ("dog", "cat"):
+        sp = "dog"
+    species_label = sp.capitalize()
 
     symptoms: list[str] = []
-    for pat, label in _SYMPTOM_PATTERNS:
-        if pat.search(text) and label not in symptoms:
-            symptoms.append(label)
+    for pat, sym_label in _SYMPTOM_PATTERNS:
+        if pat.search(text) and sym_label not in symptoms:
+            symptoms.append(sym_label)
 
     suspected_toxins: list[str] = []
-    for pat, label in _TOXIN_PATTERNS:
-        if pat.search(text) and label not in suspected_toxins:
-            suspected_toxins.append(label)
+    for pat, tox_label in _TOXIN_PATTERNS:
+        if pat.search(text) and tox_label not in suspected_toxins:
+            suspected_toxins.append(tox_label)
 
     severity_flags: list[str] = []
-    for pat, label in _SEVERITY_PATTERNS:
-        if pat.search(text) and label not in severity_flags:
-            severity_flags.append(label)
+    for pat, sev_label in _SEVERITY_PATTERNS:
+        if pat.search(text) and sev_label not in severity_flags:
+            severity_flags.append(sev_label)
 
     duration: str | None = None
     for pat, fmt in _DURATION_PATTERNS:
@@ -84,14 +87,16 @@ def interpret_query(user_input: str) -> dict[str, Any]:
 
     normalized = text
     if symptoms:
-        normalized = f"Dog: {', '.join(symptoms)}. " + text
+        normalized = f"{species_label}: {', '.join(symptoms)}. " + text
     if not symptoms and not suspected_toxins and len(text) < 80:
-        normalized = f"General dog owner question: {text}"
+        normalized = f"General {sp} owner question: {text}"
 
     return {
+        "user_text": text,
         "normalized_query": normalized,
         "symptoms": symptoms,
         "duration": duration,
         "severity_flags": severity_flags,
         "suspected_toxins": suspected_toxins,
+        "species": sp,
     }

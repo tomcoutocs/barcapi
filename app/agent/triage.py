@@ -74,15 +74,52 @@ def classify_triage(interpreted_query: dict[str, Any]) -> TriageLevel:
     return "moderate"
 
 
+def should_clarify_before_detail(interpreted_query: dict[str, Any], triage_level: str) -> bool:
+    """
+    True when the user's message is too thin to tailor guidance safely — prioritize
+    targeted questions over a long generic essay (emergency/high still get urgent guidance).
+    """
+    if triage_level in ("emergency", "high"):
+        return False
+
+    user_text = (interpreted_query.get("user_text") or interpreted_query.get("normalized_query") or "").strip()
+    if not user_text:
+        return False
+    user_lower = user_text.lower()
+
+    if _GENERAL_INFO.search(user_lower):
+        return False
+
+    symptoms: list[str] = list(interpreted_query.get("symptoms") or [])
+    toxins: list[str] = list(interpreted_query.get("suspected_toxins") or [])
+    if toxins:
+        return False
+
+    if not symptoms:
+        return True
+
+    word_count = len(user_text.split())
+    if interpreted_query.get("duration") is None and word_count < 28:
+        return True
+
+    return False
+
+
 def generate_followup_questions(interpreted_query: dict[str, Any]) -> list[str]:
     """Ask only for gaps that change triage or guidance."""
+    pet = "cat" if interpreted_query.get("species") == "cat" else "dog"
+    young = "kitten" if pet == "cat" else "puppy"
     qs: list[str] = []
     if interpreted_query.get("duration") is None and interpreted_query.get("symptoms"):
         qs.append("How long have these signs been going on (hours or days)?")
     if interpreted_query.get("symptoms") and "weight" not in " ".join(
         interpreted_query.get("normalized_query", "").lower(),
     ):
-        qs.append("What is your dog’s approximate weight and age (puppy, adult, senior)?")
+        qs.append(
+            f"What is your {pet}'s approximate weight and age ({young}, adult, senior)?",
+        )
     if not interpreted_query.get("suspected_toxins") and interpreted_query.get("symptoms"):
-        qs.append("Could your dog have eaten anything unusual (food, plants, medications, chemicals)?")
+        qs.append(
+            f"Could your {pet} have eaten anything unusual (food, plants, medications, chemicals)?",
+        )
     return qs[:4]
